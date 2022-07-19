@@ -3,7 +3,7 @@ create table diary (
 	content varchar(1000),
 	weather enum('SUNNY', 'CLOUDY', 'RAINY', 'FOGGY', 'SNOWY'),
 	created_at date default current_timestamp,
-	emotion enum('JOY', 'SAD', 'SURPRISED', 'ANGER', 'FEAR', 'HATE', 'NEUTRAL'),
+	emotion enum('JOY', 'SAD', 'ANGER', 'FEAR'),
 	month varchar(10),
 	primary key (diary_id),
 	user_id bigint,
