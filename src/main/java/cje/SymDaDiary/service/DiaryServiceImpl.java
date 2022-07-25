@@ -1,72 +1,138 @@
 package cje.SymDaDiary.service;
 
-import cje.SymDaDiary.constants.Emotion;
-import cje.SymDaDiary.domain.Diary;
+import cje.SymDaDiary.domain.*;
+import cje.SymDaDiary.repository.CommentRepository;
 import cje.SymDaDiary.repository.DiaryRepository;
+import cje.SymDaDiary.repository.QuestionRepository;
+import cje.SymDaDiary.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Service
 @Transactional
 public class DiaryServiceImpl implements DiaryService{
-
     // 의존성 주입
     private final DiaryRepository diaryRepository;
-
-    public DiaryServiceImpl(DiaryRepository diaryRepository) {
+    private final QuestionRepository questionRepository;
+    private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
+    @Autowired
+    public DiaryServiceImpl(DiaryRepository diaryRepository, QuestionRepository questionRepository, CommentRepository commentRepository, UserRepository userRepository) {
         this.diaryRepository = diaryRepository;
+        this.questionRepository = questionRepository;
+        this.commentRepository = commentRepository;
+        this.userRepository = userRepository;
     }
 
+    /*
+     * 일기 작성
+     * */
     @Override @Transactional
-    public Long keepDiary(Diary diary) {
+    public DiaryResponseDto keepDiary(DiaryCreateRequestDto diaryCreateRequestDto) {
+        // Request DTO -> Entity
+        Optional<User> userById = userRepository.findById(diaryCreateRequestDto.getUserId());
+        User user = userById.orElseThrow();
+
+        Optional<Question> questionById = questionRepository.findById(diaryCreateRequestDto.getQuestionId());
+        Question question = questionById.orElseThrow();
+
+        Diary diary = diaryCreateRequestDto.toEntity(user, question);
+
+        // 알맞은 코멘트 선택
+        Optional<Comment> commentByEmotionAndWeather = commentRepository.findByEmotionAndWeather(diaryCreateRequestDto.getEmotion(), diaryCreateRequestDto.getWeather());
+        Comment comment = commentByEmotionAndWeather.orElseThrow();
+
+        diary.setCommentOnDiary(comment);
+
         Diary savedDiary = diaryRepository.save(diary);
-        return savedDiary.getDiary_id();
+        DiaryResponseDto diaryResponseDto = savedDiary.toResponseDto(savedDiary);
+
+        return diaryResponseDto;
+        // 다이어리 id 대신 DiaryResponseDto을 리턴
     }
 
+    /*
+     * id로 일기 삭제
+     * */
     @Override @Transactional
     public void deleteDiary(Long diary_id) {
         diaryRepository.deleteById(diary_id);
     }
 
+    /*
+    * date로 일기 삭제
+    * */
     @Override @Transactional
-    public Optional<Diary> findDiary(Long diary_id) {
+    public void deleteDiaryByDate(String date) {
+        diaryRepository.deleteByDate(date);
+    }
+
+    /*
+     * 개별 일기 조회 - id로
+     * */
+    @Override @Transactional
+    public DiaryResponseDto findDiary(Long diary_id) {
         Optional<Diary> find_diary = diaryRepository.findById(diary_id);
-        return find_diary;
+        Diary diary = find_diary.orElseThrow();
+        DiaryResponseDto diaryResponseDto = diary.toResponseDto(diary);
+        return diaryResponseDto;
     }
 
-    //@Override
-   // public Optional<Diary> findDiaryByDate(LocalDate localDate) {
-   //     Optional<Diary> byCreated_at = diaryRepository.findByCreatedAt(localDate);
-  //      return byCreated_at;
-  //  }
-
+    /*
+     * 개별 일기 조회 - date로
+     * */
     @Override @Transactional
-    public List<Diary> findMonthlyDiary(String month) {
-        List<Diary> diary_byMonth = diaryRepository.findByMonth(month);
-        return diary_byMonth;
+    public DiaryResponseDto findDiaryByDate(String date) {
+        Optional<Diary> find_diaryByDate = diaryRepository.findByDate(date);
+        Diary diary = find_diaryByDate.orElseThrow();
+        DiaryResponseDto diaryResponseDto = diary.toResponseDto(diary);
+        return diaryResponseDto;
     }
 
-    @Override @Transactional
-    public Map<Long, Emotion> findMonthlyEmotion(String month) {
-        List<Diary> diary_byMonth = diaryRepository.findByMonth(month);
-        //List<Emotion> emotions_byMonth = new ArrayList<Emotion>();
-        Map<Long, Emotion> emotions_byMonth = new HashMap<>();
 
+    /*
+     * 월별 일기 조회
+     * */
+    @Override @Transactional
+    public List<DiaryResponseDto> findMonthlyDiary(String month) {
+        List<Diary> diary_byMonth = diaryRepository.findByMonth(month);
+
+        // Entity -> responseDto로 바꾸기
+        List<DiaryResponseDto> monthlyDiary = new ArrayList<>();
+        for (Diary diary: diary_byMonth){
+            monthlyDiary.add(diary.toResponseDto(diary));
+        }
+        return monthlyDiary;
+    }
+
+    /*
+     * 월별 일기 감정 조회
+     * */
+    @Override @Transactional
+    public List<MonthlyEmotionDiaryResponseDto> findMonthlyEmotion(String month) {
+        List<Diary> diary_byMonth = diaryRepository.findByMonth(month);
+
+        // Entity -> responseDto로 바꾸기
+        List<MonthlyEmotionDiaryResponseDto> monthlyDiary = new ArrayList<>();
         for (Diary diary: diary_byMonth) {
-            //emotions_byMonth.add(diary.getEmotion());
-            emotions_byMonth.put(diary.getDiary_id(), diary.getEmotion());
+            monthlyDiary.add(diary.toMonthlyEmotionDiaryResponseDto(diary));
         }
 
-        return emotions_byMonth;
+        return monthlyDiary;
     }
 
+    /*
+     * 식물 상태 조회 (월별 일기 개수 조회)
+     * */
     @Override @Transactional
     public int cntMonthlyPlant(String month) {
         List<Diary> diary_byMonth = diaryRepository.findByMonth(month);
         int plant = diary_byMonth.size();
         return plant;
     }
+
+
 }

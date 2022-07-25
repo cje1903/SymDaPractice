@@ -3,16 +3,12 @@ package cje.SymDaDiary.domain;
 import cje.SymDaDiary.constants.Emotion;
 import cje.SymDaDiary.constants.Weather;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDate;
 
 @Getter
-@Setter
 @ToString
 @NoArgsConstructor
 @Entity
@@ -28,24 +24,37 @@ public class Diary {
     @Enumerated(EnumType.STRING)
     private Weather weather;    // 날씨
 
-    private LocalDate created_at;   // 생성 시간
+    @Column(name = "created_at")
+    private LocalDate createdAt;   // 생성 시간
     @PrePersist // DB에 해당 테이블의 insert 연산을 실행할 때 같이 실행해라
-    public void created_at(){
-        this.created_at = LocalDate.now();
-        setMonth(created_at);
+    public void createdAt(){
+        this.createdAt = LocalDate.now();
+        setMonth(createdAt);
+        setDate(createdAt);
     }
 
     private String month;   // 연월
-    public void setMonth(LocalDate created_at) {
-        String year = Integer.toString(created_at.getYear());
-        String month = Integer.toString(created_at.getMonthValue());
-        this.month = year+month;
+    public void setMonth(LocalDate createdAt) {
+        String year = Integer.toString(createdAt.getYear());
+        String month = String.format("%02d", createdAt.getMonthValue());
+        // %(명령 시작) 0(채워질 문자) 2(총 자리수) d(십진정수)
+        this.month = year+ month;
+    }
+
+    private String date;    // 연월일 20220724
+    public void setDate(LocalDate createdAt){
+        String year = Integer.toString(createdAt.getYear());
+        String month = String.format("%02d", createdAt.getMonthValue());
+        String day = String.format("%02d", createdAt.getDayOfMonth());
+
+        this.date = year + month + day;
     }
 
     @Enumerated(EnumType.STRING)
     private Emotion emotion;    // 감정
 
-    @ManyToOne  // 다대일 단방향 관계, user 삭제되면 일기도 삭제
+    // 다대일 단방향 관계
+    @ManyToOne  // 유저(일) - 일기(다)
     @JoinColumn(name = "user_id")
     private User user;  // 유저 pk (FK)
 
@@ -53,13 +62,48 @@ public class Diary {
     @JoinColumn(name = "question_id")
     private Question question;  // 질문 pk (FK)
 
-    public Diary(String content, Weather weather, LocalDate created_at, String month, Emotion emotion, User user, Question question) {
+    @ManyToOne  // 코멘트(일) - 일기(다)
+    @JoinColumn(name = "comment_id")
+    private Comment comment;    // 코멘트 pk (FK)
+
+    // entity를 무분별하게 수정하지 못하도록 메서드에 이름 붙이기
+    public void setCommentOnDiary(Comment comment) {    // 일기의 weather&emotion으로 코멘트 정하기
+        this.comment = comment;
+    }
+
+    @Builder
+    public Diary(Long diary_id, String content, Weather weather, LocalDate createdAt, String month, String date, Emotion emotion, User user, Question question, Comment comment) {
+        this.diary_id = diary_id;
         this.content = content;
         this.weather = weather;
-        this.created_at = created_at;
+        this.createdAt = createdAt;
         this.month = month;
+        this.date = date;
         this.emotion = emotion;
         this.user = user;
         this.question = question;
+        this.comment = comment;
+    }
+
+    // Diary -> DiaryResponseDto
+    public DiaryResponseDto toResponseDto(Diary diary){
+        return DiaryResponseDto.builder()
+                .diary_id(diary_id)
+                .content(content)
+                .weather(weather)
+                .createdAt(createdAt)
+                .month(month)
+                .date(date)
+                .emotion(emotion)
+                .question(question)
+                .comment(comment).build();
+    }
+
+    // Diary -> MonthlyEmotionDiaryResponseDto
+    public MonthlyEmotionDiaryResponseDto toMonthlyEmotionDiaryResponseDto(Diary diary){
+        return MonthlyEmotionDiaryResponseDto.builder()
+                .diary_id(diary_id)
+                .date(date)
+                .emotion(emotion).build();
     }
 }

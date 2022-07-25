@@ -1,8 +1,8 @@
 package cje.SymDaDiary.constants;
 
 public enum Emotion {
-    JOY,
-    SAD,
-    ANGER,
-    FEAR
+    JOY,    // 0
+    SAD,    // 1
+    ANGER,  // 2
+    FEAR    // 3
 }

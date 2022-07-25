@@ -1,46 +1,47 @@
 package cje.SymDaDiary.service;
 
-import cje.SymDaDiary.constants.Emotion;
-import cje.SymDaDiary.domain.Diary;
+import cje.SymDaDiary.domain.DiaryCreateRequestDto;
+import cje.SymDaDiary.domain.DiaryResponseDto;
+import cje.SymDaDiary.domain.MonthlyEmotionDiaryResponseDto;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.time.LocalDate;
+
 
 public interface DiaryService {
-
-
-
     /*
     * 일기 작성
     * */
-    public Long keepDiary(Diary diary);
+    public DiaryResponseDto keepDiary(DiaryCreateRequestDto diaryCreateRequestDto);
 
     /*
-    * 일기 삭제
+    * id로 일기 삭제
     * */
     public void deleteDiary(Long diary_id);
 
     /*
-    * 개별 일기 조회 - id로
+    * date로 일기 삭제
     * */
-    public Optional<Diary> findDiary(Long diary_id);
+    public void deleteDiaryByDate(String date);
 
     /*
-    * 개별 일기 조회 - localDate로
+    * 개별 일기 조회 - id로
     * */
-    //public Optional<Diary> findDiaryByDate(LocalDate localDate);
+    public DiaryResponseDto findDiary(Long diary_id);
+
+    /*
+     * 개별 일기 조회 - date로
+     * */
+    public DiaryResponseDto findDiaryByDate(String date);
 
     /*
     * 월별 일기 조회
    * */
-    public List<Diary> findMonthlyDiary(String month);
+    public List<DiaryResponseDto> findMonthlyDiary(String month);
 
     /*
     * 월별 일기 감정 조회
     * */
-    public Map<Long, Emotion> findMonthlyEmotion(String month);
+    public List<MonthlyEmotionDiaryResponseDto> findMonthlyEmotion(String month);
 
     /*
     * 식물 상태 조회 (월별 일기 개수 조회)

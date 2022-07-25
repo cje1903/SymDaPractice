@@ -1,10 +1,7 @@
 package cje.SymDaDiary.domain;
 
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -24,4 +21,8 @@ public class Question {
 
     private String question;    // 질문
 
+    @Builder
+    public Question(String question) {
+        this.question = question;
+    }
 }

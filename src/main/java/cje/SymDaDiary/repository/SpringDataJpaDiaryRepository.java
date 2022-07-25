@@ -15,4 +15,10 @@ public interface SpringDataJpaDiaryRepository extends JpaRepository<Diary, Long>
     @Override
     List<Diary> findByMonth(String month);  // JPQL select m from Diary m where m.month=?
 
+    @Override
+    Optional<Diary> findByDate(String date);
+
+    @Override
+    void deleteByDate(String date);
+
 }
