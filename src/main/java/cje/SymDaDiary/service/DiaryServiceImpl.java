@@ -39,16 +39,18 @@ public class DiaryServiceImpl implements DiaryService{
         Optional<Question> questionById = questionRepository.findById(diaryCreateRequestDto.getQuestionId());
         Question question = questionById.orElseThrow();
 
-        Diary diary = diaryCreateRequestDto.toEntity(user, question);
-
         // 알맞은 코멘트 선택
         Optional<Comment> commentByEmotionAndWeather = commentRepository.findByEmotionAndWeather(diaryCreateRequestDto.getEmotion(), diaryCreateRequestDto.getWeather());
         Comment comment = commentByEmotionAndWeather.orElseThrow();
 
-        diary.setCommentOnDiary(comment);
+        Diary diary = diaryCreateRequestDto.toEntity(user, question);
+
+         diary.giveCommentByEmotionAndWeather(comment);
 
         Diary savedDiary = diaryRepository.save(diary);
-        DiaryResponseDto diaryResponseDto = savedDiary.toResponseDto(savedDiary);
+
+        DiaryResponseDto diaryResponseDto = savedDiary.diaryToDiaryResponseDto(savedDiary);
+
 
         return diaryResponseDto;
         // 다이어리 id 대신 DiaryResponseDto을 리턴
@@ -77,7 +79,7 @@ public class DiaryServiceImpl implements DiaryService{
     public DiaryResponseDto findDiary(Long diary_id) {
         Optional<Diary> find_diary = diaryRepository.findById(diary_id);
         Diary diary = find_diary.orElseThrow();
-        DiaryResponseDto diaryResponseDto = diary.toResponseDto(diary);
+        DiaryResponseDto diaryResponseDto = diary.diaryToDiaryResponseDto(diary);
         return diaryResponseDto;
     }
 
@@ -88,10 +90,28 @@ public class DiaryServiceImpl implements DiaryService{
     public DiaryResponseDto findDiaryByDate(String date) {
         Optional<Diary> find_diaryByDate = diaryRepository.findByDate(date);
         Diary diary = find_diaryByDate.orElseThrow();
-        DiaryResponseDto diaryResponseDto = diary.toResponseDto(diary);
+        DiaryResponseDto diaryResponseDto = diary.diaryToDiaryResponseDto(diary);
         return diaryResponseDto;
     }
 
+    /*
+     * 일기 수정
+     * */
+
+    @Override
+    public DiaryResponseDto updateDiary(Long diaryId, DiaryCreateRequestDto diaryCreateRequestDto) {
+        Diary diary = diaryRepository.findById(diaryId)
+                        .orElseThrow(()->new IllegalArgumentException("해당 일기가 존재하지 않습니다."));
+
+        diary.update(diaryCreateRequestDto);
+        Comment commentByEmotionAndWeather = commentRepository.findByEmotionAndWeather(diary.getEmotion(), diary.getWeather())
+                .orElseThrow(()-> new IllegalArgumentException());
+
+        diary.giveCommentByEmotionAndWeather(commentByEmotionAndWeather);
+
+        DiaryResponseDto diaryResponseDto = diary.diaryToDiaryResponseDto(diary);
+        return diaryResponseDto;
+    }
 
     /*
      * 월별 일기 조회
@@ -103,7 +123,7 @@ public class DiaryServiceImpl implements DiaryService{
         // Entity -> responseDto로 바꾸기
         List<DiaryResponseDto> monthlyDiary = new ArrayList<>();
         for (Diary diary: diary_byMonth){
-            monthlyDiary.add(diary.toResponseDto(diary));
+            monthlyDiary.add(diary.diaryToDiaryResponseDto(diary));
         }
         return monthlyDiary;
     }
@@ -118,7 +138,7 @@ public class DiaryServiceImpl implements DiaryService{
         // Entity -> responseDto로 바꾸기
         List<MonthlyEmotionDiaryResponseDto> monthlyDiary = new ArrayList<>();
         for (Diary diary: diary_byMonth) {
-            monthlyDiary.add(diary.toMonthlyEmotionDiaryResponseDto(diary));
+            monthlyDiary.add(diary.diaryToMonthlyEmotionDiaryResponseDto(diary));
         }
 
         return monthlyDiary;

@@ -7,7 +7,6 @@ import cje.SymDaDiary.domain.Question;
 import cje.SymDaDiary.service.DiaryService;
 import cje.SymDaDiary.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,12 +47,21 @@ public class DiaryController {
     /*
     * date로 일기 삭제 - DELETE
     * */
-    //@ResponseBody
-    @ResponseStatus(value = HttpStatus.OK)
+    @ResponseBody   //@ResponseStatus(value = HttpStatus.OK)
     @DeleteMapping("/diary/date/{date}/delete")
     public void deleteDiaryByDate(@PathVariable String date){
-        System.out.println("DiaryController.deleteDiaryByDate");
         diaryService.deleteDiaryByDate(date);
+    }
+
+    /*
+     * 다이어리 수정하기 - PUT
+     * */
+    @ResponseBody
+    @PutMapping("/diary/{diaryId}")
+    public DiaryResponseDto updateDiary(@PathVariable Long diaryId, @RequestBody DiaryCreateRequestDto diaryCreateRequestDto){
+        // 업데이트
+        DiaryResponseDto diaryResponseDto = diaryService.updateDiary(diaryId, diaryCreateRequestDto);
+        return diaryResponseDto;
     }
 
     /*

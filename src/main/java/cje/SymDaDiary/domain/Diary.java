@@ -2,7 +2,6 @@ package cje.SymDaDiary.domain;
 
 import cje.SymDaDiary.constants.Emotion;
 import cje.SymDaDiary.constants.Weather;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
@@ -67,13 +66,12 @@ public class Diary {
     private Comment comment;    // 코멘트 pk (FK)
 
     // entity를 무분별하게 수정하지 못하도록 메서드에 이름 붙이기
-    public void setCommentOnDiary(Comment comment) {    // 일기의 weather&emotion으로 코멘트 정하기
+    public void giveCommentByEmotionAndWeather(Comment comment) {    // 일기의 weather&emotion으로 코멘트 정하기
         this.comment = comment;
     }
 
     @Builder
-    public Diary(Long diary_id, String content, Weather weather, LocalDate createdAt, String month, String date, Emotion emotion, User user, Question question, Comment comment) {
-        this.diary_id = diary_id;
+    public Diary(String content, Weather weather, LocalDate createdAt, String month, String date, Emotion emotion, User user, Question question, Comment comment) {
         this.content = content;
         this.weather = weather;
         this.createdAt = createdAt;
@@ -85,8 +83,14 @@ public class Diary {
         this.comment = comment;
     }
 
+    public void update(DiaryCreateRequestDto diaryCreateRequestDto){
+        this.content = diaryCreateRequestDto.getContent();
+        this.weather = diaryCreateRequestDto.getWeather();
+        this.emotion = diaryCreateRequestDto.getEmotion();
+    }
+
     // Diary -> DiaryResponseDto
-    public DiaryResponseDto toResponseDto(Diary diary){
+    public DiaryResponseDto diaryToDiaryResponseDto(Diary diary){
         return DiaryResponseDto.builder()
                 .diary_id(diary_id)
                 .content(content)
@@ -100,7 +104,7 @@ public class Diary {
     }
 
     // Diary -> MonthlyEmotionDiaryResponseDto
-    public MonthlyEmotionDiaryResponseDto toMonthlyEmotionDiaryResponseDto(Diary diary){
+    public MonthlyEmotionDiaryResponseDto diaryToMonthlyEmotionDiaryResponseDto(Diary diary){
         return MonthlyEmotionDiaryResponseDto.builder()
                 .diary_id(diary_id)
                 .date(date)

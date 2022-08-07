@@ -24,6 +24,11 @@ public interface DiaryService {
     public void deleteDiaryByDate(String date);
 
     /*
+    * 일기 수정
+    * */
+    public DiaryResponseDto updateDiary(Long diaryId, DiaryCreateRequestDto diaryCreateRequestDto);
+
+    /*
     * 개별 일기 조회 - id로
     * */
     public DiaryResponseDto findDiary(Long diary_id);

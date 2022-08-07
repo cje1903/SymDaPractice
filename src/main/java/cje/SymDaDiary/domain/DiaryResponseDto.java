@@ -52,5 +52,4 @@ public class DiaryResponseDto {
         this.comment = comment;
     }
 
-
 }
